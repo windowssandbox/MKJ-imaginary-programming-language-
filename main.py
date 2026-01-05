@@ -104,6 +104,11 @@ builtin = {
     'random': 'random',
     'true': True,
     'false': False,
+    'input': None,
+    'input_string': None,
+    'input_number': None,
+    'input_number_nodec': None,
+    'input_math': None,
 }
 
 @dataclass
@@ -125,6 +130,19 @@ class leaf:
                 else: elem.append(leaf.parse(s))
             s.expect('}')
             return cls(elem, None, None, 'list')
+
+        if s.peek() == 'log':
+            s.expect('log')
+            s.expect('.')
+            s.expect('userinput')
+            s.expect('.')
+            s.expect('(')
+            text = s.pop()
+            s.expect(',')
+            kind = s.pop()
+            s.expect(')')
+            return cls(None, None, (text, kind), 'input')
+            
 
         name = s.pop()
         method = None
@@ -156,6 +174,11 @@ class leaf:
                 case 'lower':  return val.lower()
                 case 'find':   return self.args[0] if self.args[0] in val else 'null'
                 case 'randomize': return random.randint(*val)
+
+        if self.kind == 'input':
+            answer = input(self.args[0].strip('"'))
+            return eval(answer) if self.args[1] == 'input_mathN' else answer
+
 
         if self.kind == 'call':
             return self.method.run(env)
